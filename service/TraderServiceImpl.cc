@@ -1,9 +1,11 @@
-#include "TraderServiceImpl.hh"
+// Copyright (c) 2010
+// All rights reserved.
 
+#include "TraderServiceImpl.hh"
 #include "Log.hh"
 #include "TraderOptions.hh"
 #include "TraderSpiImpl.hh"
-
+#include "soil/Macro.hh"
 #include "SgitFtdcUserApiStructPrint.hh"
 
 namespace flyer {
@@ -17,43 +19,39 @@ TraderServiceImpl::TraderServiceImpl(
     front_id_(-1),
     session_id_(-1),
     max_order_ref_(-1) {
-  FLYER_TRACE <<"TraderServiceImpl::TraderServiceImpl()" ;
+  FLYER_TRACE <<"TraderServiceImpl::TraderServiceImpl()";
 
-  cond_.reset( soil::STimer::create() );
+  cond_.reset(soil::STimer::create());
 
   options_ = dynamic_cast<TraderOptions*>(options);
-  
-  trader_api_ = CSgitFtdcTraderApi::CreateFtdcTraderApi(options_->flow_path.data());
-
+  trader_api_ =
+      CSgitFtdcTraderApi::CreateFtdcTraderApi(
+          options_->flow_path.data());
   trader_spi_.reset(new TraderSpiImpl(this));
-  
   trader_api_->RegisterSpi(trader_spi_.get());
 
   // SGIT_TERT_QUICK
   // SGIT_TERT_RESUME
   trader_api_->SubscribePrivateTopic(Sgit_TERT_QUICK);
-  
   trader_api_->SubscribePublicTopic(Sgit_TERT_QUICK);
-
   trader_api_->RegisterFront(const_cast<char*>(options_->front_address.data()));
 
-  trader_api_->Init(false, true);
+  trader_api_->Init(options_->is_logged,
+                    options_->is_fastmode);
 
   wait("login");
 }
 
 TraderServiceImpl::~TraderServiceImpl() {
-  FLYER_TRACE <<"TraderServiceImpl::~TraderServiceImpl()" ;
-  
+  FLYER_TRACE <<"TraderServiceImpl::~TraderServiceImpl()";
+
   trader_api_->RegisterSpi(nullptr);
-  
   trader_api_->Release();
-  
   trader_api_ = nullptr;
 }
 
 std::string TraderServiceImpl::tradingDay() {
-  FLYER_TRACE <<"TraderServiceImpl::tradingDate()" ;
+  FLYER_TRACE <<"TraderServiceImpl::tradingDate()";
 
   return trader_api_->GetTradingDay();
 }
@@ -61,7 +59,7 @@ std::string TraderServiceImpl::tradingDay() {
 int TraderServiceImpl::orderOpenBuy(
     const std::string& instru,
     double price, int volume) {
-  FLYER_TRACE <<"TraderServiceImpl::orderOpenBuy()" ;
+  FLYER_TRACE <<"TraderServiceImpl::orderOpenBuy()";
 
   FLYER_DEBUG <<"instru: " <<instru
             <<"\t price: " <<price
@@ -69,26 +67,30 @@ int TraderServiceImpl::orderOpenBuy(
 
   int order_ref = -1;
 
-  std::unique_ptr<CSgitFtdcInputOrderField> req( orderField(order_ref) );
+  std::unique_ptr<CSgitFtdcInputOrderField> req(
+      orderField(&order_ref));
 
-  strncpy(req->InstrumentID, instru.data(), sizeof(req->InstrumentID));
+  S_INPUT(req->InstrumentID,
+          CSgitFtdcInputOrderField,
+          InstrumentID,
+          instru.data());
   req->Direction = Sgit_FTDC_D_Buy;
   req->LimitPrice = price;
   req->VolumeTotalOriginal = volume;
 
   try {
-    orderGo( req.get() );
+    orderGo(req.get());
   } catch (...) {
     throw std::runtime_error("order open buy failed.");
   }
-  
+
   return order_ref;
 }
 
 int TraderServiceImpl::orderOpenBuyFAK(
     const std::string& instru,
     double price, int volume) {
-  FLYER_TRACE <<"TraderServiceImpl::orderOpenBuyFAK()" ;
+  FLYER_TRACE <<"TraderServiceImpl::orderOpenBuyFAK()";
 
   FLYER_DEBUG <<"instru: " <<instru
             <<"\t price: " <<price
@@ -96,28 +98,32 @@ int TraderServiceImpl::orderOpenBuyFAK(
 
   int order_ref = -1;
 
-  std::unique_ptr<CSgitFtdcInputOrderField> req( orderField(order_ref) );
+  std::unique_ptr<CSgitFtdcInputOrderField> req(
+      orderField(&order_ref));
 
-  strncpy(req->InstrumentID, instru.data(), sizeof(req->InstrumentID));
+  S_INPUT(req->InstrumentID,
+          CSgitFtdcInputOrderField,
+          InstrumentID,
+          instru.data());
   req->Direction = Sgit_FTDC_D_Buy;
   req->LimitPrice = price;
   req->VolumeTotalOriginal = volume;
 
   req->TimeCondition = Sgit_FTDC_TC_IOC;
-  
+
   try {
     orderGo(req.get());
   } catch (...) {
     throw std::runtime_error("order open buy FAK failed.");
   }
-  
+
   return order_ref;
 }
 
 int TraderServiceImpl::orderOpenBuyFOK(
     const std::string& instru,
     double price, int volume) {
-  FLYER_TRACE <<"TraderServiceImpl::orderOpenBuyFOK()" ;
+  FLYER_TRACE <<"TraderServiceImpl::orderOpenBuyFOK()";
 
   FLYER_DEBUG <<"instru: " <<instru
             <<"\t price: " <<price
@@ -125,9 +131,13 @@ int TraderServiceImpl::orderOpenBuyFOK(
 
   int order_ref = -1;
 
-  std::unique_ptr<CSgitFtdcInputOrderField> req( orderField(order_ref) );
+  std::unique_ptr<CSgitFtdcInputOrderField> req(
+      orderField(&order_ref));
 
-  strncpy(req->InstrumentID, instru.data(), sizeof(req->InstrumentID));
+  S_INPUT(req->InstrumentID,
+          CSgitFtdcInputOrderField,
+          InstrumentID,
+          instru.data());
   req->Direction = Sgit_FTDC_D_Buy;
   req->LimitPrice = price;
   req->VolumeTotalOriginal = volume;
@@ -140,14 +150,14 @@ int TraderServiceImpl::orderOpenBuyFOK(
   } catch (...) {
     throw std::runtime_error("order open buy FOK failed.");
   }
-  
+
   return order_ref;
 }
 
 int TraderServiceImpl::orderOpenSell(
     const std::string& instru,
     double price, int volume) {
-  FLYER_TRACE <<"TraderServiceImpl::orderOpenSell()" ;
+  FLYER_TRACE <<"TraderServiceImpl::orderOpenSell()";
 
   FLYER_DEBUG <<"instru: " <<instru
             <<"\t price: " <<price
@@ -155,9 +165,13 @@ int TraderServiceImpl::orderOpenSell(
 
   int order_ref = -1;
 
-  std::unique_ptr<CSgitFtdcInputOrderField> req( orderField(order_ref) );
+  std::unique_ptr<CSgitFtdcInputOrderField> req(
+      orderField(&order_ref));
 
-  strncpy(req->InstrumentID, instru.data(), sizeof(req->InstrumentID));
+  S_INPUT(req->InstrumentID,
+          CSgitFtdcInputOrderField,
+          InstrumentID,
+          instru.data());
   req->Direction = Sgit_FTDC_D_Sell;
   req->LimitPrice = price;
   req->VolumeTotalOriginal = volume;
@@ -174,7 +188,7 @@ int TraderServiceImpl::orderOpenSell(
 int TraderServiceImpl::orderOpenSellFAK(
     const std::string& instru,
     double price, int volume) {
-  FLYER_TRACE <<"TraderServiceImpl::orderOpenSellFAK()" ;
+  FLYER_TRACE <<"TraderServiceImpl::orderOpenSellFAK()";
 
   FLYER_DEBUG <<"instru: " <<instru
             <<"\t price: " <<price
@@ -182,28 +196,32 @@ int TraderServiceImpl::orderOpenSellFAK(
 
   int order_ref = -1;
 
-  std::unique_ptr<CSgitFtdcInputOrderField> req( orderField(order_ref) );
+  std::unique_ptr<CSgitFtdcInputOrderField> req(
+      orderField(&order_ref));
 
-  strncpy(req->InstrumentID, instru.data(), sizeof(req->InstrumentID));
+  S_INPUT(req->InstrumentID,
+          CSgitFtdcInputOrderField,
+          InstrumentID,
+          instru.data());
   req->Direction = Sgit_FTDC_D_Sell;
   req->LimitPrice = price;
   req->VolumeTotalOriginal = volume;
 
   req->TimeCondition = Sgit_FTDC_TC_IOC;
-  
+
   try {
     orderGo(req.get());
   } catch (...) {
     throw std::runtime_error("order open sell FAK failed.");
   }
-  
+
   return order_ref;
 }
 
 int TraderServiceImpl::orderOpenSellFOK(
     const std::string& instru,
     double price, int volume) {
-  FLYER_TRACE <<"TraderServiceImpl::orderOpenSellFOK()" ;
+  FLYER_TRACE <<"TraderServiceImpl::orderOpenSellFOK()";
 
   FLYER_DEBUG <<"instru: " <<instru
             <<"\t price: " <<price
@@ -211,9 +229,13 @@ int TraderServiceImpl::orderOpenSellFOK(
 
   int order_ref = -1;
 
-  std::unique_ptr<CSgitFtdcInputOrderField> req( orderField(order_ref) );
+  std::unique_ptr<CSgitFtdcInputOrderField> req(
+      orderField(&order_ref));
 
-  strncpy(req->InstrumentID, instru.data(), sizeof(req->InstrumentID));
+  S_INPUT(req->InstrumentID,
+          CSgitFtdcInputOrderField,
+          InstrumentID,
+          instru.data());
   req->Direction = Sgit_FTDC_D_Sell;
   req->LimitPrice = price;
   req->VolumeTotalOriginal = volume;
@@ -226,14 +248,14 @@ int TraderServiceImpl::orderOpenSellFOK(
   } catch (...) {
     throw std::runtime_error("order open sell FOK failed.");
   }
-  
+
   return order_ref;
 }
 
 int TraderServiceImpl::orderCloseBuy(
     const std::string& instru,
     double price, int volume) {
-  FLYER_TRACE <<"TraderServiceImpl::orderCloseBuy()" ;
+  FLYER_TRACE <<"TraderServiceImpl::orderCloseBuy()";
 
   FLYER_DEBUG <<"instru: " <<instru
             <<"\t price: " <<price
@@ -241,9 +263,13 @@ int TraderServiceImpl::orderCloseBuy(
 
   int order_ref = -1;
 
-  std::unique_ptr<CSgitFtdcInputOrderField> req( orderField(order_ref) );
+  std::unique_ptr<CSgitFtdcInputOrderField> req(
+      orderField(&order_ref));
 
-  strncpy(req->InstrumentID, instru.data(), sizeof(req->InstrumentID));
+  S_INPUT(req->InstrumentID,
+          CSgitFtdcInputOrderField,
+          InstrumentID,
+          instru.data());
   req->Direction = Sgit_FTDC_D_Buy;
   req->LimitPrice = price;
   req->VolumeTotalOriginal = volume;
@@ -261,7 +287,7 @@ int TraderServiceImpl::orderCloseBuy(
 int TraderServiceImpl::orderCloseSell(
     const std::string& instru,
     double price, int volume) {
-  FLYER_TRACE <<"TraderServiceImpl::orderCloseSell()" ;
+  FLYER_TRACE <<"TraderServiceImpl::orderCloseSell()";
 
   FLYER_DEBUG <<"instru: " <<instru
             <<"\t price: " <<price
@@ -269,9 +295,13 @@ int TraderServiceImpl::orderCloseSell(
 
   int order_ref = -1;
 
-  std::unique_ptr<CSgitFtdcInputOrderField> req( orderField(order_ref) );
+  std::unique_ptr<CSgitFtdcInputOrderField> req(
+      orderField(&order_ref));
 
-  strncpy(req->InstrumentID, instru.data(), sizeof(req->InstrumentID));
+  S_INPUT(req->InstrumentID,
+          CSgitFtdcInputOrderField,
+          InstrumentID,
+          instru.data());
   req->Direction = Sgit_FTDC_D_Sell;
   req->LimitPrice = price;
   req->VolumeTotalOriginal = volume;
@@ -287,16 +317,22 @@ int TraderServiceImpl::orderCloseSell(
 }
 
 int TraderServiceImpl::queryAccount() {
-  FLYER_TRACE <<"TraderServiceImpl::queryAccount()" ;
+  FLYER_TRACE <<"TraderServiceImpl::queryAccount()";
 
   CSgitFtdcQryTradingAccountField req;
   memset(&req, 0x0, sizeof(req));
-  
-  strncpy( req.BrokerID, options_->broker_id.data(), sizeof(req.BrokerID) );
-  strncpy( req.InvestorID, options_->investor_id.data(), sizeof(req.InvestorID) );
+
+  S_INPUT(req.BrokerID,
+         CSgitFtdcQryTradingAccountField,
+         BrokerID,
+         options_->broker_id.data());
+  S_INPUT(req.InvestorID,
+          CSgitFtdcQryTradingAccountField,
+          InvestorID,
+          options_->investor_id.data());
 
   FLYER_PDU <<req;
-  
+
   int result = trader_api_->ReqQryTradingAccount(&req, ++request_id_);
 
   if (result != 0) {
@@ -310,25 +346,42 @@ void TraderServiceImpl::initSession(
   front_id_ = pRspUserLogin->FrontID;
   session_id_ = pRspUserLogin->SessionID;
 
-  max_order_ref_ = atoi(pRspUserLogin->MaxOrderRef);
+  max_order_ref_ = std::stoi(pRspUserLogin->MaxOrderRef);
 }
 
+void TraderServiceImpl::ready() {
+  FLYER_TRACE <<"TraderServiceImpl::ready()";
+
+  trader_api_->Ready();
+}
 void TraderServiceImpl::login() {
-  FLYER_TRACE <<"TraderServiceImpl::login()" ;
+  FLYER_TRACE <<"TraderServiceImpl::login()";
 
   CSgitFtdcReqUserLoginField req;
   memset(&req, 0x0, sizeof(req));
-  
-  strncpy(req.BrokerID, options_->broker_id.data(), sizeof(req.BrokerID));
-  strncpy(req.UserID, options_->user_id.data(), sizeof(req.UserID));
-  strncpy(req.Password, options_->password.data(), sizeof(req.Password));
-  strncpy(req.UserProductInfo, options_->user_product_info.data(), sizeof(req.UserProductInfo));
+
+  S_INPUT(req.TradingDay,
+          CSgitFtdcReqUserLoginField,
+          TradingDay,
+          tradingDay().data());
+  S_INPUT(req.BrokerID,
+          CSgitFtdcReqUserLoginField,
+          BrokerID,
+          options_->broker_id.data());
+  S_INPUT(req.UserID,
+          CSgitFtdcReqUserLoginField,
+          UserID,
+          options_->user_id.data());
+  S_INPUT(req.Password,
+          CSgitFtdcReqUserLoginField,
+          Password,
+          options_->password.data());
 
   FLYER_PDU <<req;
-  
+
   int result = trader_api_->ReqUserLogin(&req, ++request_id_);
 
-  if (result !=0) {
+  if (result != 0) {
     FLYER_ERROR <<"return code " <<result;
     throw std::runtime_error("login failed.");
   }
@@ -346,24 +399,34 @@ void TraderServiceImpl::notify() {
   cond_->notifyAll();
 }
 
-CSgitFtdcInputOrderField* TraderServiceImpl::orderField(int& order_ref) {
-  std::unique_ptr<CSgitFtdcInputOrderField> req( new CSgitFtdcInputOrderField() );
+CSgitFtdcInputOrderField* TraderServiceImpl::orderField(int* order_ref) {
+  std::unique_ptr<CSgitFtdcInputOrderField> req(new CSgitFtdcInputOrderField());
 
-  order_ref = ++max_order_ref_;
-  
-  strncpy(req->BrokerID, options_->broker_id.data(), sizeof(req->BrokerID));
-  strncpy(req->InvestorID, options_->investor_id.data(), sizeof(req->InvestorID));
+  *order_ref = ++max_order_ref_;
+
+  S_INPUT(req->BrokerID,
+          CSgitFtdcInputOrderField,
+          BrokerID,
+          options_->broker_id.data());
+  S_INPUT(req->InvestorID,
+          CSgitFtdcInputOrderField,
+          InvestorID,
+          options_->investor_id.data());
 
   char OrderRef[13];
-  snprintf(OrderRef, sizeof(OrderRef), "%d", order_ref);
-  strncpy(req->OrderRef, OrderRef, sizeof(req->OrderRef));
-  
-  strncpy(req->UserID, options_->user_id.data(), sizeof(req->UserID));
+  snprintf(OrderRef, sizeof(OrderRef), "%d", *order_ref);
+  S_INPUT(req->OrderRef,
+          CSgitFtdcInputOrderField,
+          OrderRef,
+          OrderRef);
+  S_INPUT(req->UserID,
+          CSgitFtdcInputOrderField,
+          UserID,
+          options_->user_id.data());
   req->OrderPriceType = Sgit_FTDC_OPT_LimitPrice;
 
   // req->CombOffsetFlag[0] = SGIT_FTDC_OF_Open;
   req->CombOffsetFlag[0] = Sgit_FTDC_OF_Open;
-  
   req->CombHedgeFlag[0] = Sgit_FTDC_OPT_AnyPrice;
   req->TimeCondition = Sgit_FTDC_TC_GFD;
   req->VolumeCondition = Sgit_FTDC_VC_AV;
@@ -377,14 +440,13 @@ CSgitFtdcInputOrderField* TraderServiceImpl::orderField(int& order_ref) {
 
 void TraderServiceImpl::orderGo(CSgitFtdcInputOrderField* req) {
   FLYER_TRACE <<"TraderServiceImpl::orderGo()";
-  
   FLYER_PDU <<*req;
-  
+
   int result = trader_api_->ReqOrderInsert(req, ++request_id_);
 
   if (result !=0) {
     FLYER_ERROR <<"return code " <<result;
-    throw ;
+    throw;
   }
 }
 
@@ -398,4 +460,4 @@ TraderService* TraderService::createService(
   return new TraderServiceImpl(options, callback);
 }
 
-} // namespace flyer
+}  // namespace flyer

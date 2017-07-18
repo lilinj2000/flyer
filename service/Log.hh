@@ -1,3 +1,6 @@
+// Copyright (c) 2010
+// All rights reserved.
+
 #ifndef FLYER_LOG_HH
 #define FLYER_LOG_HH
 

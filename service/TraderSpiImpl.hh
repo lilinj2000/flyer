@@ -1,3 +1,6 @@
+// Copyright (c) 2010
+// All rights reserved.
+
 #ifndef FLYER_TRADER_SPI_IMPL_HH
 #define FLYER_TRADER_SPI_IMPL_HH
 
@@ -10,7 +13,8 @@ class TraderServiceImpl;
 
 class TraderSpiImpl : public CSgitFtdcTraderSpi {
  public:
-  TraderSpiImpl(TraderServiceImpl* service);
+  explicit TraderSpiImpl(TraderServiceImpl* service);
+
   virtual ~TraderSpiImpl();
 
   // interface from CSgitFtdcTraderSpi
@@ -36,20 +40,22 @@ class TraderSpiImpl : public CSgitFtdcTraderSpi {
   virtual void OnRspError(
       CSgitFtdcRspInfoField *pRspInfo,
       int nRequestID, bool bIsLast);
-  
+
   virtual void OnRtnOrder(CSgitFtdcOrderField *pOrder);
 
   virtual void OnRtnTrade(CSgitFtdcTradeField *pTrade);
 
-  virtual void OnErrRtnOrderInsert(CSgitFtdcInputOrderField *pInputOrder, CSgitFtdcRspInfoField *pRspInfo);
-  
+  virtual void OnErrRtnOrderInsert(
+      CSgitFtdcInputOrderField *pInputOrder,
+      CSgitFtdcRspInfoField *pRspInfo);
+
  protected:
     void checkRspInfo(CSgitFtdcRspInfoField *pRspInfo);
-  
+
  private:
   TraderServiceImpl* service_;
 };
 
-}; // namesapce flyer
+}  // namespace flyer
 
-#endif // FLYER_TRADER_SPI_IMPL_HH
+#endif  // FLYER_TRADER_SPI_IMPL_HH

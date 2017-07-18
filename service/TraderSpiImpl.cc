@@ -1,3 +1,6 @@
+// Copyright (c) 2010
+// All rights reserved.
+
 #include "TraderSpiImpl.hh"
 #include "TraderServiceImpl.hh"
 #include "TraderOptions.hh"
@@ -35,16 +38,18 @@ void TraderSpiImpl::OnRspUserLogin(
     CSgitFtdcRspUserLoginField *pRspUserLogin,
     CSgitFtdcRspInfoField *pRspInfo,
     int nRequestID, bool bIsLast) {
-  FLYER_TRACE <<"TraderSpiImpl::OnRspUserLogin()" ;
+  FLYER_TRACE <<"TraderSpiImpl::OnRspUserLogin()";
 
   try {
     checkRspInfo(pRspInfo);
-    
+
     FLYER_PDU <<*pRspUserLogin;
 
     service_->initSession(pRspUserLogin);
-                          
+
     if (bIsLast) {
+      service_->ready();
+
       service_->notify();
     }
   } catch (...) {
@@ -55,11 +60,11 @@ void TraderSpiImpl::OnRspQryTradingAccount(
     CSgitFtdcTradingAccountField *pTradingAccount,
     CSgitFtdcRspInfoField *pRspInfo,
     int nRequestID, bool bIsLast) {
-  FLYER_TRACE <<"TraderSpiImpl::OnRspQryTradingAccount()" ;
+  FLYER_TRACE <<"TraderSpiImpl::OnRspQryTradingAccount()";
 
   try {
     checkRspInfo(pRspInfo);
-    
+
     FLYER_PDU <<*pTradingAccount;
   } catch (...) {
   }
@@ -68,7 +73,7 @@ void TraderSpiImpl::OnRspQryTradingAccount(
 void TraderSpiImpl::OnRspError(
     CSgitFtdcRspInfoField *pRspInfo,
     int nRequestID, bool bIsLast) {
-  FLYER_TRACE <<"TraderSpiImpl::OnRspError()" ;
+  FLYER_TRACE <<"TraderSpiImpl::OnRspError()";
 
   if (pRspInfo) {
     FLYER_PDU <<*pRspInfo;
@@ -79,7 +84,7 @@ void TraderSpiImpl::OnRspOrderInsert(
     CSgitFtdcInputOrderField *pInputOrder,
     CSgitFtdcRspInfoField *pRspInfo,
     int nRequestID, bool bIsLast) {
-  FLYER_TRACE <<"TraderSpiImpl::OnRspOrderInsert()" ;
+  FLYER_TRACE <<"TraderSpiImpl::OnRspOrderInsert()";
 
   try {
     checkRspInfo(pRspInfo);
@@ -91,42 +96,44 @@ void TraderSpiImpl::OnRspOrderInsert(
     FLYER_PDU <<*pInputOrder;
 
     int order_ref = std::stoi(pInputOrder->OrderRef);
-      
-    service_->callback()->onRspOrderInsert( order_ref );
+
+    service_->callback()->onRspOrderInsert(order_ref);
   }
 }
 
-void TraderSpiImpl::OnRtnOrder(CSgitFtdcOrderField *pOrder) {
-  FLYER_TRACE <<"TraderSpiImpl::OnRtnOrder()" ;
+void TraderSpiImpl::OnRtnOrder(
+    CSgitFtdcOrderField *pOrder) {
+  FLYER_TRACE <<"TraderSpiImpl::OnRtnOrder()";
 
   if (pOrder) {
     FLYER_PDU <<*pOrder;
   }
 
   if (service_->callback()) {
-    int order_ref = atoi(pOrder->OrderRef);
+    int order_ref = std::stoi(pOrder->OrderRef);
 
     std::string order_status;
     order_status.push_back(pOrder->OrderStatus);
     std::string status_msg = pOrder->StatusMsg;
-    
+
     service_->callback()->onRtnOrder(order_ref, order_status, status_msg);
   }
 }
 
-void TraderSpiImpl::OnRtnTrade(CSgitFtdcTradeField *pTrade) {
-  FLYER_TRACE <<"TraderSpiImpl::OnRtnTrade()" ;
+void TraderSpiImpl::OnRtnTrade(
+    CSgitFtdcTradeField *pTrade) {
+  FLYER_TRACE <<"TraderSpiImpl::OnRtnTrade()";
 
   if (pTrade) {
     FLYER_PDU <<*pTrade;
   }
 
   if (service_->callback()) {
-    int order_ref = atoi(pTrade->OrderRef);
+    int order_ref = std::stoi(pTrade->OrderRef);
 
     double price = pTrade->Price;
     double volume = pTrade->Volume;
-    
+
     service_->callback()->onRtnTrade(order_ref, price, volume);
   }
 }
@@ -134,25 +141,26 @@ void TraderSpiImpl::OnRtnTrade(CSgitFtdcTradeField *pTrade) {
 void TraderSpiImpl::OnErrRtnOrderInsert(
     CSgitFtdcInputOrderField *pInputOrder,
     CSgitFtdcRspInfoField *pRspInfo) {
-  FLYER_TRACE <<"TraderSpiImpl::OneErrRtnOrderInsert()" ;
+  FLYER_TRACE <<"TraderSpiImpl::OneErrRtnOrderInsert()";
 
   try {
     checkRspInfo(pRspInfo);
-    
+
     FLYER_PDU <<*pInputOrder;
   } catch (...) {
   }
 }
 
-void TraderSpiImpl::checkRspInfo(CSgitFtdcRspInfoField *pRspInfo) {
-  FLYER_TRACE <<"TraderSpiImpl::checkRspInfo()" ;
+void TraderSpiImpl::checkRspInfo(
+    CSgitFtdcRspInfoField *pRspInfo) {
+  FLYER_TRACE <<"TraderSpiImpl::checkRspInfo()";
 
   if (pRspInfo) {
-    FLYER_PDU <<*pRspInfo ;
+    FLYER_PDU <<*pRspInfo;
   }
-  
+
   bool result = ((pRspInfo) && (pRspInfo->ErrorID != 0));
-  
+
   if (result) {
     std::stringstream err_stream;
     err_stream <<"ErrorID=" <<pRspInfo->ErrorID <<","
@@ -162,4 +170,4 @@ void TraderSpiImpl::checkRspInfo(CSgitFtdcRspInfoField *pRspInfo) {
   }
 }
 
-} // namespace flyer
+}  // namespace flyer

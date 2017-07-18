@@ -12,16 +12,16 @@ unittest_SOURCES = \
 
 unittest_CPPFLAGS = -I$(top_srcdir) -I.. -I..\
 		$(BOOST_CPPFLAGS) \
-		$(ZEUSING_CPPFLAGS) \
+		$(SGI_CPPFLAGS) \
 		$(GTEST_CPPFLAGS) \
 		$(SOIL_CPPFLAGS)
 
 
 unittest_LDADD = \
 	$(GTEST_LIBADD) \
-	../service/libzero.la \
+	../service/libflyer.la \
 	$(BOOST_LIBADD) \
-	$(ZEUSING_LIBADD) \
+	$(SGI_LIBADD) \
 	$(SOIL_LIBADD)
 
 
@@ -31,5 +31,5 @@ unittest_LDFLAGS = $(LIBADD_DL) -Wl,--no-as-needed -pthread
 # header files
 noinst_HEADERS = 
 
-EXTRA_DIST = env.sh zero.cfg log.cfg
+EXTRA_DIST = env.sh trader.cfg log.cfg
 

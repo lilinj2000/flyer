@@ -1,9 +1,11 @@
+// Copyright (c) 2010
+// All rights reserved.
+
 #ifndef FLYER_TRADER_OPTIONS_HH
 #define FLYER_TRADER_OPTIONS_HH
 
-#include "soil/Config.hh"
-
 #include <string>
+#include "soil/Config.hh"
 
 namespace flyer {
 
@@ -18,22 +20,21 @@ class TraderOptions : public soil::Options {
 
   std::string flow_path;
   std::string front_address;
-  
+
   std::string broker_id;
   std::string user_id;
   std::string password;
 
   std::string investor_id;
 
-  bool is_auth_force;
-  std::string user_product_info;
-  std::string auth_code;
+  bool is_logged;
+  bool is_fastmode;
 
  private:
   boost::program_options::options_description options_;
 };
 
-}  
+}  // namespace flyer
 
 
-#endif 
+#endif
