@@ -44,13 +44,13 @@ TEST_F(TraderServiceImplTest, loginTest) {
 }
 
 TEST_F(TraderServiceImplTest, orderOpenBuyTest) {
-  std::string instru = "IF1510";
-  double price = 2889;
+  std::string instru = "cu1709";
+  double price = 44920;
   int volume = 1;
 
   service_->orderOpenBuy(instru, price, volume);
 
-  cond_->wait(2000);
+  cond_->wait(200000);
 
   SUCCEED();
 }

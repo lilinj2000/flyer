@@ -40,6 +40,8 @@ TraderServiceImpl::TraderServiceImpl(
                     options_->is_fastmode);
 
   wait("login");
+
+  wait();  // for ready, just sleep 2 second
 }
 
 TraderServiceImpl::~TraderServiceImpl() {
@@ -70,7 +72,7 @@ int TraderServiceImpl::orderOpenBuy(
   std::unique_ptr<CSgitFtdcInputOrderField> req(
       orderField(&order_ref));
 
-  S_INPUT(req->InstrumentID,
+  S_INPUT(req.get(),
           CSgitFtdcInputOrderField,
           InstrumentID,
           instru.data());
@@ -101,7 +103,7 @@ int TraderServiceImpl::orderOpenBuyFAK(
   std::unique_ptr<CSgitFtdcInputOrderField> req(
       orderField(&order_ref));
 
-  S_INPUT(req->InstrumentID,
+  S_INPUT(req.get(),
           CSgitFtdcInputOrderField,
           InstrumentID,
           instru.data());
@@ -134,7 +136,7 @@ int TraderServiceImpl::orderOpenBuyFOK(
   std::unique_ptr<CSgitFtdcInputOrderField> req(
       orderField(&order_ref));
 
-  S_INPUT(req->InstrumentID,
+  S_INPUT(req.get(),
           CSgitFtdcInputOrderField,
           InstrumentID,
           instru.data());
@@ -168,7 +170,7 @@ int TraderServiceImpl::orderOpenSell(
   std::unique_ptr<CSgitFtdcInputOrderField> req(
       orderField(&order_ref));
 
-  S_INPUT(req->InstrumentID,
+  S_INPUT(req.get(),
           CSgitFtdcInputOrderField,
           InstrumentID,
           instru.data());
@@ -199,7 +201,7 @@ int TraderServiceImpl::orderOpenSellFAK(
   std::unique_ptr<CSgitFtdcInputOrderField> req(
       orderField(&order_ref));
 
-  S_INPUT(req->InstrumentID,
+  S_INPUT(req.get(),
           CSgitFtdcInputOrderField,
           InstrumentID,
           instru.data());
@@ -232,7 +234,7 @@ int TraderServiceImpl::orderOpenSellFOK(
   std::unique_ptr<CSgitFtdcInputOrderField> req(
       orderField(&order_ref));
 
-  S_INPUT(req->InstrumentID,
+  S_INPUT(req.get(),
           CSgitFtdcInputOrderField,
           InstrumentID,
           instru.data());
@@ -266,7 +268,7 @@ int TraderServiceImpl::orderCloseBuy(
   std::unique_ptr<CSgitFtdcInputOrderField> req(
       orderField(&order_ref));
 
-  S_INPUT(req->InstrumentID,
+  S_INPUT(req.get(),
           CSgitFtdcInputOrderField,
           InstrumentID,
           instru.data());
@@ -298,7 +300,7 @@ int TraderServiceImpl::orderCloseSell(
   std::unique_ptr<CSgitFtdcInputOrderField> req(
       orderField(&order_ref));
 
-  S_INPUT(req->InstrumentID,
+  S_INPUT(req.get(),
           CSgitFtdcInputOrderField,
           InstrumentID,
           instru.data());
@@ -322,11 +324,11 @@ int TraderServiceImpl::queryAccount() {
   CSgitFtdcQryTradingAccountField req;
   memset(&req, 0x0, sizeof(req));
 
-  S_INPUT(req.BrokerID,
+  S_INPUT(&req,
          CSgitFtdcQryTradingAccountField,
          BrokerID,
          options_->broker_id.data());
-  S_INPUT(req.InvestorID,
+  S_INPUT(&req,
           CSgitFtdcQryTradingAccountField,
           InvestorID,
           options_->investor_id.data());
@@ -354,25 +356,26 @@ void TraderServiceImpl::ready() {
 
   trader_api_->Ready();
 }
+
 void TraderServiceImpl::login() {
   FLYER_TRACE <<"TraderServiceImpl::login()";
 
   CSgitFtdcReqUserLoginField req;
   memset(&req, 0x0, sizeof(req));
 
-  S_INPUT(req.TradingDay,
+  S_INPUT(&req,
           CSgitFtdcReqUserLoginField,
           TradingDay,
           tradingDay().data());
-  S_INPUT(req.BrokerID,
+  S_INPUT(&req,
           CSgitFtdcReqUserLoginField,
           BrokerID,
           options_->broker_id.data());
-  S_INPUT(req.UserID,
+  S_INPUT(&req,
           CSgitFtdcReqUserLoginField,
           UserID,
           options_->user_id.data());
-  S_INPUT(req.Password,
+  S_INPUT(&req,
           CSgitFtdcReqUserLoginField,
           Password,
           options_->password.data());
@@ -404,22 +407,22 @@ CSgitFtdcInputOrderField* TraderServiceImpl::orderField(int* order_ref) {
 
   *order_ref = ++max_order_ref_;
 
-  S_INPUT(req->BrokerID,
+  S_INPUT(req.get(),
           CSgitFtdcInputOrderField,
           BrokerID,
           options_->broker_id.data());
-  S_INPUT(req->InvestorID,
+  S_INPUT(req.get(),
           CSgitFtdcInputOrderField,
           InvestorID,
           options_->investor_id.data());
 
   char OrderRef[13];
   snprintf(OrderRef, sizeof(OrderRef), "%d", *order_ref);
-  S_INPUT(req->OrderRef,
+  S_INPUT(req.get(),
           CSgitFtdcInputOrderField,
           OrderRef,
           OrderRef);
-  S_INPUT(req->UserID,
+  S_INPUT(req.get(),
           CSgitFtdcInputOrderField,
           UserID,
           options_->user_id.data());
@@ -444,7 +447,7 @@ void TraderServiceImpl::orderGo(CSgitFtdcInputOrderField* req) {
 
   int result = trader_api_->ReqOrderInsert(req, ++request_id_);
 
-  if (result !=0) {
+  if (result != 0) {
     FLYER_ERROR <<"return code " <<result;
     throw;
   }
