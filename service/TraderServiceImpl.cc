@@ -417,7 +417,7 @@ CSgitFtdcInputOrderField* TraderServiceImpl::orderField(int* order_ref) {
           options_->investor_id.data());
 
   char OrderRef[13];
-  snprintf(OrderRef, sizeof(OrderRef), "%d", *order_ref);
+  snprintf(OrderRef, sizeof(OrderRef), "%012d", *order_ref);
   S_INPUT(req.get(),
           CSgitFtdcInputOrderField,
           OrderRef,
