@@ -41,7 +41,8 @@ class TraderSpiImpl : public CSgitFtdcTraderSpi {
       CSgitFtdcRspInfoField *pRspInfo,
       int nRequestID, bool bIsLast);
 
-  virtual void OnRtnOrder(CSgitFtdcOrderField *pOrder);
+  virtual void OnRtnOrder(CSgitFtdcOrderField *pOrder,
+                          CSgitFtdcRspInfoField *pRspInfo);
 
   virtual void OnRtnTrade(CSgitFtdcTradeField *pTrade);
 

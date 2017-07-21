@@ -345,10 +345,12 @@ int TraderServiceImpl::queryAccount() {
 
 void TraderServiceImpl::initSession(
     CSgitFtdcRspUserLoginField* pRspUserLogin) {
+  FLYER_TRACE <<"TraderServiceImpl::initSession()";
+
   front_id_ = pRspUserLogin->FrontID;
   session_id_ = pRspUserLogin->SessionID;
 
-  max_order_ref_ = std::stoi(pRspUserLogin->MaxOrderRef);
+  max_order_ref_ = std::atoi(pRspUserLogin->MaxOrderRef);
 }
 
 void TraderServiceImpl::ready() {

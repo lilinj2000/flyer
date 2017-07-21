@@ -52,7 +52,8 @@ void TraderSpiImpl::OnRspUserLogin(
 
       service_->notify();
     }
-  } catch (...) {
+  } catch (std::exception& e) {
+    FLYER_ERROR <<"exception cached: " <<e.what();
   }
 }
 
@@ -102,8 +103,17 @@ void TraderSpiImpl::OnRspOrderInsert(
 }
 
 void TraderSpiImpl::OnRtnOrder(
-    CSgitFtdcOrderField *pOrder) {
+    CSgitFtdcOrderField *pOrder,
+    CSgitFtdcRspInfoField *pRspInfo) {
   FLYER_TRACE <<"TraderSpiImpl::OnRtnOrder()";
+
+  int error_id = -1;
+  std::string err_msg;
+  if (pRspInfo) {
+    FLYER_PDU <<*pRspInfo;
+    error_id = pRspInfo->ErrorID;
+    err_msg = pRspInfo->ErrorMsg;
+  }
 
   if (pOrder) {
     FLYER_PDU <<*pOrder;
@@ -112,11 +122,7 @@ void TraderSpiImpl::OnRtnOrder(
   if (service_->callback()) {
     int order_ref = std::stoi(pOrder->OrderRef);
 
-    std::string order_status;
-    order_status.push_back(pOrder->OrderStatus);
-    std::string status_msg = pOrder->StatusMsg;
-
-    service_->callback()->onRtnOrder(order_ref, order_status, status_msg);
+    service_->callback()->onRtnOrder(order_ref, error_id, err_msg);
   }
 }
 
