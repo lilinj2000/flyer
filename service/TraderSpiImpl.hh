@@ -20,10 +20,20 @@ class TraderSpiImpl : public CSgitFtdcTraderSpi {
   // interface from CSgitFtdcTraderSpi
   virtual void OnFrontConnected();
 
-  virtual void OnFrontDisconnected(int nReason);
+  virtual void OnFrontDisconnected(char *pErrMsg);
 
   virtual void OnRspUserLogin(
       CSgitFtdcRspUserLoginField *pRspUserLogin,
+      CSgitFtdcRspInfoField *pRspInfo,
+      int nRequestID, bool bIsLast);
+
+  virtual void OnRspUserLogout(
+      CSgitFtdcUserLogoutField *pUserLogout,
+      CSgitFtdcRspInfoField *pRspInfo,
+      int nRequestID, bool bIsLast);
+
+  virtual void OnRspUserPasswordUpdate(
+      CSgitFtdcUserPasswordUpdateField *pUserPasswordUpdate,
       CSgitFtdcRspInfoField *pRspInfo,
       int nRequestID, bool bIsLast);
 
@@ -32,23 +42,54 @@ class TraderSpiImpl : public CSgitFtdcTraderSpi {
       CSgitFtdcRspInfoField *pRspInfo,
       int nRequestID, bool bIsLast);
 
+  virtual void OnRspOrderAction(
+      CSgitFtdcInputOrderActionField *pInputOrderAction,
+      CSgitFtdcRspInfoField *pRspInfo,
+      int nRequestID, bool bIsLast);
+
+  virtual void OnRspQryOrder(
+      CSgitFtdcOrderField *pOrder,
+      CSgitFtdcRspInfoField *pRspInfo,
+      int nRequestID, bool bIsLast);
+
   virtual void OnRspQryTradingAccount(
       CSgitFtdcTradingAccountField *pTradingAccount,
       CSgitFtdcRspInfoField *pRspInfo,
       int nRequestID, bool bIsLast);
 
-  virtual void OnRspError(
+  virtual void OnRspQryInvestor(
+      CSgitFtdcInvestorField *pInvestor,
       CSgitFtdcRspInfoField *pRspInfo,
       int nRequestID, bool bIsLast);
 
-  virtual void OnRtnOrder(CSgitFtdcOrderField *pOrder,
-                          CSgitFtdcRspInfoField *pRspInfo);
+  virtual void OnRspQryInstrument(
+      CSgitFtdcInstrumentField *pInstrument,
+      CSgitFtdcRspInfoField *pRspInfo,
+      int nRequestID, bool bIsLast);
+
+  virtual void OnRtnOrder(
+      CSgitFtdcOrderField *pOrder,
+      CSgitFtdcRspInfoField *pRspInfo);
 
   virtual void OnRtnTrade(CSgitFtdcTradeField *pTrade);
 
-  virtual void OnErrRtnOrderInsert(
-      CSgitFtdcInputOrderField *pInputOrder,
-      CSgitFtdcRspInfoField *pRspInfo);
+  virtual void OnRtnInstrumentStatus(
+      CSgitFtdcInstrumentStatusField *pInstrumentStatus);
+
+  virtual void OnRspQryInvestorPositionDetail(
+      CSgitFtdcInvestorPositionDetailField *pInvestorPositionDetail,
+      CSgitFtdcRspInfoField *pRspInfo,
+      int nRequestID, bool bIsLast);
+
+  virtual void OnRspQryInvestorPosition(
+      CSgitFtdcInvestorPositionField *pInvestorPosition,
+      CSgitFtdcRspInfoField *pRspInfo,
+      int nRequestID, bool bIsLast);
+
+  virtual void onRspMBLQuot(
+      CSgitMBLQuotData *pMBLQuotData,
+      CSgitFtdcRspInfoField *pRspMsg,
+      int nRequestID, bool bIsLast);
 
  protected:
     void checkRspInfo(CSgitFtdcRspInfoField *pRspInfo);

@@ -28,10 +28,10 @@ void TraderSpiImpl::OnFrontConnected() {
   service_->login();
 }
 
-void TraderSpiImpl::OnFrontDisconnected(int nReason) {
+void TraderSpiImpl::OnFrontDisconnected(char *pErrMsg) {
   FLYER_TRACE <<"TraderSpiImpl::OnFrontDisconnected()";
 
-  FLYER_INFO <<"OnFrontDisconnected, the Reason is " <<std::hex <<nReason;
+  FLYER_INFO <<"OnFrontDisconnected, the Reason is " <<pErrMsg;
 }
 
 void TraderSpiImpl::OnRspUserLogin(
@@ -57,28 +57,18 @@ void TraderSpiImpl::OnRspUserLogin(
   }
 }
 
-void TraderSpiImpl::OnRspQryTradingAccount(
-    CSgitFtdcTradingAccountField *pTradingAccount,
+void TraderSpiImpl::OnRspUserLogout(
+    CSgitFtdcUserLogoutField *pUserLogout,
     CSgitFtdcRspInfoField *pRspInfo,
     int nRequestID, bool bIsLast) {
-  FLYER_TRACE <<"TraderSpiImpl::OnRspQryTradingAccount()";
-
-  try {
-    checkRspInfo(pRspInfo);
-
-    FLYER_PDU <<*pTradingAccount;
-  } catch (...) {
-  }
+  FLYER_TRACE <<"TraderSpiImpl::OnRspUserLogout()";
 }
 
-void TraderSpiImpl::OnRspError(
+void TraderSpiImpl::OnRspUserPasswordUpdate(
+    CSgitFtdcUserPasswordUpdateField *pUserPasswordUpdate,
     CSgitFtdcRspInfoField *pRspInfo,
     int nRequestID, bool bIsLast) {
-  FLYER_TRACE <<"TraderSpiImpl::OnRspError()";
-
-  if (pRspInfo) {
-    FLYER_PDU <<*pRspInfo;
-  }
+  FLYER_TRACE <<"TraderSpiImpl::OnRspUserPasswordUpdate()";
 }
 
 void TraderSpiImpl::OnRspOrderInsert(
@@ -100,6 +90,48 @@ void TraderSpiImpl::OnRspOrderInsert(
 
     service_->callback()->onRspOrderInsert(order_ref);
   }
+}
+
+void TraderSpiImpl::OnRspOrderAction(
+    CSgitFtdcInputOrderActionField *pInputOrderAction,
+    CSgitFtdcRspInfoField *pRspInfo,
+    int nRequestID, bool bIsLast) {
+  FLYER_TRACE <<"TraderSpiImpl::OnRspOrderAction()";
+}
+
+void TraderSpiImpl::OnRspQryOrder(
+    CSgitFtdcOrderField *pOrder,
+    CSgitFtdcRspInfoField *pRspInfo,
+    int nRequestID, bool bIsLast) {
+  FLYER_TRACE <<"TraderSpiImpl::OnRspQryOrder()";
+}
+
+void TraderSpiImpl::OnRspQryTradingAccount(
+    CSgitFtdcTradingAccountField *pTradingAccount,
+    CSgitFtdcRspInfoField *pRspInfo,
+    int nRequestID, bool bIsLast) {
+  FLYER_TRACE <<"TraderSpiImpl::OnRspQryTradingAccount()";
+
+  try {
+    checkRspInfo(pRspInfo);
+
+    FLYER_PDU <<*pTradingAccount;
+  } catch (...) {
+  }
+}
+
+void TraderSpiImpl::OnRspQryInvestor(
+    CSgitFtdcInvestorField *pInvestor,
+    CSgitFtdcRspInfoField *pRspInfo,
+    int nRequestID, bool bIsLast) {
+  FLYER_TRACE <<"TraderSpiImpl::OnRspQryInvestor()";
+}
+
+void TraderSpiImpl::OnRspQryInstrument(
+    CSgitFtdcInstrumentField *pInstrument,
+    CSgitFtdcRspInfoField *pRspInfo,
+    int nRequestID, bool bIsLast) {
+  FLYER_TRACE <<"TraderSpiImpl::OnRspQryInstrument()";
 }
 
 void TraderSpiImpl::OnRtnOrder(
@@ -144,17 +176,30 @@ void TraderSpiImpl::OnRtnTrade(
   }
 }
 
-void TraderSpiImpl::OnErrRtnOrderInsert(
-    CSgitFtdcInputOrderField *pInputOrder,
-    CSgitFtdcRspInfoField *pRspInfo) {
-  FLYER_TRACE <<"TraderSpiImpl::OneErrRtnOrderInsert()";
+void TraderSpiImpl::OnRtnInstrumentStatus(
+    CSgitFtdcInstrumentStatusField *pInstrumentStatus) {
+  FLYER_TRACE <<"TraderSpiImpl::OnRtnInstrumentStatus()";
+}
 
-  try {
-    checkRspInfo(pRspInfo);
+void TraderSpiImpl::OnRspQryInvestorPositionDetail(
+    CSgitFtdcInvestorPositionDetailField *pInvestorPositionDetail,
+    CSgitFtdcRspInfoField *pRspInfo,
+    int nRequestID, bool bIsLast) {
+  FLYER_TRACE <<"TraderSpiImpl::OnRspQryInvestorPositionDetail()";
+}
 
-    FLYER_PDU <<*pInputOrder;
-  } catch (...) {
-  }
+void TraderSpiImpl::OnRspQryInvestorPosition(
+    CSgitFtdcInvestorPositionField *pInvestorPosition,
+    CSgitFtdcRspInfoField *pRspInfo,
+    int nRequestID, bool bIsLast) {
+  FLYER_TRACE <<"TraderSpiImpl::OnRspQryInvestorPosition()";
+}
+
+void TraderSpiImpl::onRspMBLQuot(
+    CSgitMBLQuotData *pMBLQuotData,
+    CSgitFtdcRspInfoField *pRspMsg,
+    int nRequestID, bool bIsLast) {
+  FLYER_TRACE <<"TraderSpiImpl::onRspMBLQuot()";
 }
 
 void TraderSpiImpl::checkRspInfo(
